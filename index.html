@@ -1,0 +1,1221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Coffee Shop</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f8f1e7;color:#3b2418}
+header{background:#321d13;color:white;padding:20px;text-align:center}
+header h1{margin:0}
+header p{margin-bottom:0}
+nav{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;background:white;padding:10px;position:sticky;top:0;z-index:5}
+button{border:0;padding:11px 15px;border-radius:8px;background:#6f432b;color:white;cursor:pointer}
+nav button{background:#eee;color:#3b2418}
+button:disabled{opacity:.5;cursor:not-allowed}
+section{padding:18px;max-width:850px;margin:auto}
+.page{display:none}
+.page.active{display:block}
+.hero{text-align:center;padding:40px 10px}
+.card{background:white;padding:17px;border-radius:14px;margin:12px 0;box-shadow:0 2px 8px #0000000b;overflow-wrap:anywhere}
+input,select{width:100%;padding:12px;margin:7px 0;border:1px solid #ccc;border-radius:7px;background:white}
+.small{font-size:13px;color:#806b60}
+.danger{background:#a52c2c}
+.green{background:#28794b}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}
+h2{margin-top:5px}
+.price{font-weight:bold}
+.muted{color:#806b60}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;background:#f1e5d8;font-size:13px}
+.empty{text-align:center;padding:20px;color:#806b60}
+footer{text-align:center;padding:20px;color:#806b60;font-size:13px}
+#connectionStatus{font-size:12px;padding:8px;text-align:center;background:#eee;color:#594335}
+#qrCode{display:flex;justify-content:center;align-items:center;padding:15px;min-height:50px}
+#qrCode img,#qrCode canvas{max-width:100%;height:auto}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1 id="cafeTitle">☕ My Coffee Shop</h1>
+<p>Fresh Coffee, Happy Moments!</p>
+</header>
+
+<div id="connectionStatus">Connecting…</div>
+
+<nav id="mainNav">
+<button data-page="home">Home</button>
+<button data-page="menu">Menu</button>
+<button data-page="cart">Cart</button>
+<button data-page="track">Track Order</button>
+<button data-page="rewards">Rewards</button>
+<button data-page="admin">Admin</button>
+</nav>
+
+<section id="home" class="page active">
+<div class="hero">
+<h2>Welcome Coffee Lovers! ☕</h2>
+<p>Your favourite coffee is just one click away.</p>
+<button data-page="menu">Explore Menu</button>
+</div>
+
+<div class="card">
+<h3>Easy Ordering</h3>
+<p>Choose your favourite coffee, add it to your cart and place your order.</p>
+</div>
+
+<div class="card">
+<h3>Freshly Made</h3>
+<p>Our team prepares your order with care.</p>
+</div>
+</section>
+
+<section id="menu" class="page">
+<h2>Our Menu</h2>
+<div id="menuList"></div>
+</section>
+
+<section id="cart" class="page">
+<h2>Your Cart</h2>
+<div id="cartList"></div>
+<h3 id="total">Total: ₹0</h3>
+
+<div class="card">
+<h3>Customer Details</h3>
+
+<input id="customerName" placeholder="Your Name">
+<input id="customerPhone" type="tel" maxlength="10" placeholder="Mobile Number">
+
+<label>Order Type</label>
+<select id="orderType">
+<option value="Dine-in">Dine-in</option>
+<option value="Takeaway">Takeaway</option>
+</select>
+
+<input id="tableNumber" placeholder="Table Number (Dine-in)">
+
+<label>Payment Method</label>
+<select id="payment">
+<option value="Pay at Counter">Pay at Counter</option>
+<option value="UPI - Not activated">UPI (Not activated yet)</option>
+</select>
+
+<p class="small">Online UPI payment is not active yet.</p>
+<button id="placeOrderButton">Place Order</button>
+</div>
+</section>
+
+<section id="track" class="page">
+<h2>Track Your Order</h2>
+
+<div class="card">
+<p>Enter the same mobile number used when placing your order.</p>
+<input id="trackPhone" type="tel" maxlength="10" placeholder="Mobile Number">
+<button id="trackButton">Find My Orders</button>
+<div id="trackingResults"></div>
+</div>
+</section>
+
+<section id="rewards" class="page">
+<h2>🎁 Loyalty Rewards</h2>
+
+<div class="card">
+<p id="rewardDescription">Join our loyalty program!</p>
+<input id="rewardPhone" type="tel" maxlength="10" placeholder="Enter your mobile number">
+<button id="checkRewardsButton">Check My Rewards</button>
+<div id="rewardResult"></div>
+</div>
+</section>
+
+<section id="admin" class="page">
+<h2>⚙️ Admin Panel</h2>
+
+<div class="card" id="loginBox">
+<h3>Admin Login</h3>
+<input id="adminEmail" type="email" placeholder="Owner email">
+<input id="adminPassword" type="password" placeholder="Password">
+<button id="loginButton">Login</button>
+<p class="small">Owner login uses Firebase Email/Password Authentication. Never put your password in this file.</p>
+</div>
+
+<div id="adminArea" hidden>
+
+<div class="card">
+<h3>Cafe Settings</h3>
+<label>Cafe Name</label>
+<input id="cafeNameInput" placeholder="Cafe Name">
+<button id="saveCafeButton">Save Cafe Name</button>
+</div>
+
+<div class="card">
+<h3>📱 Cafe QR Code</h3>
+<p>Generate one common QR code for your cafe. Customers can scan it to open your ordering website.</p>
+
+<button id="generateQRButton">Generate Cafe QR</button>
+
+<div id="qrCode"></div>
+
+<p id="qrMessage" class="small"></p>
+
+<button id="downloadQRButton" class="green" hidden>Download QR Code</button>
+
+<p class="small">
+Important: Generate your final QR only after publishing your website online. A local Spck preview link will not work for other customers.
+</p>
+</div>
+
+<div class="card">
+<h3>Menu Management</h3>
+<input id="itemName" placeholder="Item Name">
+<input id="itemPrice" type="number" min="1" placeholder="Price in ₹">
+<button id="addItemButton">Add New Item</button>
+<div id="adminMenu"></div>
+</div>
+
+<div class="card">
+<h3>🎁 Reward Settings</h3>
+
+<label>Enable Loyalty Program</label>
+<select id="rewardEnabled">
+<option value="yes">Enabled</option>
+<option value="no">Disabled</option>
+</select>
+
+<label>Visits Required</label>
+<input id="visitsRequired" type="number" min="1">
+
+<label>Reward Type</label>
+<select id="rewardType">
+<option value="discount">Discount (%)</option>
+<option value="gift">Free Gift</option>
+<option value="coupon">Coupon</option>
+</select>
+
+<label>Reward Value / Gift Name</label>
+<input id="rewardValue" placeholder="Example: 20 or Free Coffee">
+
+<label>Coupon Validity (Days)</label>
+<input id="rewardExpiry" type="number" min="1">
+
+<button id="saveRewardsButton">Save Reward Settings</button>
+</div>
+
+<div class="card">
+<h3>Kitchen / Order Management</h3>
+<div id="ordersList"></div>
+</div>
+
+<button id="logoutButton" class="danger">Logout Admin</button>
+</div>
+</section>
+
+<footer>☕ Made with love for coffee lovers.</footer>
+
+<!-- QR Code Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getAuth,
+signInAnonymously,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,
+collection,
+doc,
+getDoc,
+getDocs,
+setDoc,
+addDoc,
+updateDoc,
+query,
+where,
+orderBy,
+onSnapshot,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const firebaseConfig = {
+apiKey: "AIzaSyDUG7VHun5p02Je852RTLxwJM_YmNiNoBg",
+authDomain: "cafeorderingapp-c19af.firebaseapp.com",
+projectId: "cafeorderingapp-c19af",
+storageBucket: "cafeorderingapp-c19af.firebasestorage.app",
+messagingSenderId: "246286004316",
+appId: "1:246286004316:web:81d3b3919f8318be127699"
+};
+
+const OWNER_EMAIL = "niteshjmp45@gmail.com";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+
+const defaults = [
+{id:"cappuccino",name:"Cappuccino",price:120,available:true},
+{id:"cold-coffee",name:"Cold Coffee",price:100,available:true},
+{id:"espresso",name:"Espresso",price:80,available:true}
+];
+
+
+let menu = [];
+let cart = [];
+let orders = [];
+
+let settings = {
+cafeName:"My Coffee Shop",
+enabled:"yes",
+visits:5,
+type:"discount",
+value:"10",
+expiry:30
+};
+
+let currentUser = null;
+let adminLoggedIn = false;
+let stopOrdersListener = null;
+
+
+const $ = id => document.getElementById(id);
+const val = id => $(id).value.trim();
+
+
+const esc = value =>
+String(value ?? "").replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[c]));
+
+
+const isAdmin = () =>
+!!(
+auth.currentUser &&
+auth.currentUser.email === OWNER_EMAIL &&
+!auth.currentUser.isAnonymous
+);
+
+
+function setStatus(message){
+$("connectionStatus").textContent = message;
+}
+
+
+function updateCafeName(){
+$("cafeTitle").textContent = "☕ " + settings.cafeName;
+document.title = settings.cafeName;
+}
+
+
+function showPage(id){
+
+document.querySelectorAll(".page")
+.forEach(p=>p.classList.remove("active"));
+
+$(id).classList.add("active");
+
+if(id==="menu") renderMenu();
+if(id==="cart") renderCart();
+if(id==="admin") renderAdmin();
+if(id==="rewards") renderRewardDescription();
+
+}
+
+
+function renderMenu(){
+
+$("menuList").innerHTML = menu
+.filter(i=>i.available!==false)
+.map(i=>`
+<div class="card">
+<h3>☕ ${esc(i.name)}</h3>
+<p class="price">₹${Number(i.price)}</p>
+<button data-action="add" data-id="${esc(i.id)}">Add to Cart</button>
+</div>
+`)
+.join("") || '<p class="empty">No menu items available.</p>';
+
+}
+
+
+function renderCart(){
+
+$("cartList").innerHTML = cart.map((i,n)=>`
+<div class="card">
+<b>${esc(i.name)}</b> - ₹${i.price}
+<button class="danger" data-action="remove" data-index="${n}">Remove</button>
+</div>
+`).join("") || '<p class="empty">Your cart is empty.</p>';
+
+$("total").textContent =
+"Total: ₹" + cart.reduce((s,i)=>s+Number(i.price),0);
+
+}
+
+
+function renderRewardDescription(){
+
+$("rewardDescription").textContent =
+settings.enabled==="no"
+? "Loyalty program is currently unavailable."
+: `Complete ${settings.visits} visits and get ${
+settings.type==="discount"
+? settings.value+"% discount"
+: settings.value+" reward"
+}!`;
+
+}
+
+
+async function loadPublicData(){
+
+const [menuSnap,settingsSnap] = await Promise.all([
+getDocs(collection(db,"menu")),
+getDoc(doc(db,"settings","main"))
+]);
+
+if(menuSnap.empty){
+menu = defaults;
+}else{
+menu = menuSnap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+if(settingsSnap.exists()){
+settings = {...settings,...settingsSnap.data()};
+}
+
+updateCafeName();
+renderMenu();
+renderRewardDescription();
+
+}
+
+
+async function requireAuth(){
+
+if(!auth.currentUser){
+await signInAnonymously(auth);
+}
+
+currentUser = auth.currentUser;
+
+}
+
+
+async function placeOrder(){
+
+const name = val("customerName");
+const phone = val("customerPhone");
+const type = val("orderType");
+const table = val("tableNumber");
+const payment = val("payment");
+
+if(!name || !/^[0-9]{10}$/.test(phone) || cart.length===0){
+alert("Enter your name, valid 10-digit mobile number and add items first.");
+return;
+}
+
+if(type==="Dine-in" && !table){
+alert("Please enter your table number.");
+return;
+}
+
+if(payment!=="Pay at Counter"){
+alert("UPI payment is not active. Choose Pay at Counter.");
+return;
+}
+
+try{
+
+await requireAuth();
+
+const items = cart.map(i=>({
+id:i.id,
+name:i.name,
+price:Number(i.price)
+}));
+
+const total = items.reduce((s,i)=>s+i.price,0);
+
+const ref = await addDoc(collection(db,"orders"),{
+
+customerUid:currentUser.uid,
+name,
+phone,
+items,
+total,
+type,
+table,
+payment,
+status:"New",
+visitCredited:false,
+createdAt:serverTimestamp()
+
+});
+
+cart = [];
+renderCart();
+
+$("customerName").value = "";
+$("customerPhone").value = "";
+$("tableNumber").value = "";
+
+alert("Order placed! Your order number is " + ref.id);
+
+$("trackPhone").value = phone;
+
+showPage("track");
+
+await trackOrders();
+
+}catch(e){
+
+console.error(e);
+alert("Order save nahi hua: " + e.message);
+
+}
+
+}
+
+
+async function trackOrders(){
+
+const phone = val("trackPhone");
+const box = $("trackingResults");
+
+if(!/^[0-9]{10}$/.test(phone)){
+box.textContent = "Please enter a valid 10-digit mobile number.";
+return;
+}
+
+box.textContent = "Searching your orders...";
+
+try{
+
+const q = query(
+collection(db,"orders"),
+where("phone","==",phone)
+);
+
+const snap = await getDocs(q);
+
+const mine = snap.docs
+.map(d=>({id:d.id,...d.data()}))
+.sort((a,b)=>{
+
+const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+
+return tb-ta;
+
+});
+
+
+box.innerHTML = mine.map(o=>`
+<div class="card">
+<b>Order #${esc(o.id)}</b>
+<p>${(o.items||[]).map(i=>esc(i.name)).join(", ")}</p>
+<p>Total: ₹${Number(o.total||0)}</p>
+<p>${esc(o.type)} ${
+o.type==="Dine-in" ? "· Table "+esc(o.table) : ""
+}</p>
+<p>Status: <span class="status">${esc(o.status)}</span></p>
+</div>
+`).join("") || '<p class="empty">No orders found for this mobile number.</p>';
+
+}catch(e){
+
+console.error(e);
+box.textContent = "Could not load orders: " + e.message;
+
+}
+
+}
+
+
+async function renderAdmin(){
+
+$("loginBox").hidden = adminLoggedIn;
+$("adminArea").hidden = !adminLoggedIn;
+
+if(!adminLoggedIn) return;
+
+$("cafeNameInput").value = settings.cafeName;
+$("rewardEnabled").value = settings.enabled;
+$("visitsRequired").value = settings.visits;
+$("rewardType").value = settings.type;
+$("rewardValue").value = settings.value;
+$("rewardExpiry").value = settings.expiry;
+
+renderAdminMenu();
+
+await loadAdminOrders();
+
+}
+
+
+function renderAdminMenu(){
+
+$("adminMenu").innerHTML = menu.map(i=>`
+<div class="card">
+<b>${esc(i.name)} - ₹${Number(i.price)}</b>
+<div class="row">
+<button data-action="edit" data-id="${esc(i.id)}">Edit</button>
+<button class="danger" data-action="delete" data-id="${esc(i.id)}">Delete</button>
+</div>
+</div>
+`).join("") || '<p class="empty">No menu items.</p>';
+
+}
+
+
+async function loadAdminOrders(){
+
+if(stopOrdersListener) stopOrdersListener();
+
+const q = query(
+collection(db,"orders"),
+orderBy("createdAt","desc")
+);
+
+stopOrdersListener = onSnapshot(q,snap=>{
+
+orders = snap.docs.map(d=>({id:d.id,...d.data()}));
+renderOrders();
+
+},err=>{
+
+console.error(err);
+$("ordersList").textContent = "Orders load error: " + err.message;
+
+});
+
+}
+
+
+function renderOrders(){
+
+$("ordersList").innerHTML = orders.map(o=>`
+<div class="card">
+<b>Order #${esc(o.id)}</b>
+<p>${esc(o.name)} · ${esc(o.phone)}</p>
+<p>${(o.items||[]).map(i=>esc(i.name)).join(", ")}</p>
+<p>Total ₹${Number(o.total||0)} · ${esc(o.type)} ${
+o.type==="Dine-in" ? "· Table "+esc(o.table) : ""
+}</p>
+<p>Payment: ${esc(o.payment)}</p>
+<p>Status: <span class="status">${esc(o.status)}</span></p>
+
+<select data-action="status" data-id="${esc(o.id)}">
+<option ${o.status==="New"?"selected":""}>New</option>
+<option ${o.status==="Preparing"?"selected":""}>Preparing</option>
+<option ${o.status==="Ready"?"selected":""}>Ready</option>
+<option ${o.status==="Completed"?"selected":""}>Completed</option>
+</select>
+</div>
+`).join("") || '<p class="empty">No orders yet.</p>';
+
+}
+
+
+async function saveMenuItem(item){
+
+await setDoc(doc(db,"menu",String(item.id)),{
+
+name:item.name,
+price:Number(item.price),
+available:item.available!==false
+
+});
+
+const snap = await getDocs(collection(db,"menu"));
+
+menu = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+renderMenu();
+renderAdminMenu();
+
+}
+
+
+async function addItem(){
+
+const name = val("itemName");
+const price = Number(val("itemPrice"));
+
+if(!name || !Number.isFinite(price) || price<=0){
+alert("Enter valid item name and price.");
+return;
+}
+
+try{
+
+await requireAdmin();
+
+const id = crypto.randomUUID();
+
+await saveMenuItem({
+id,
+name,
+price,
+available:true
+});
+
+$("itemName").value = "";
+$("itemPrice").value = "";
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+}
+
+
+async function requireAdmin(){
+
+if(!isAdmin()){
+throw new Error("Admin login required.");
+}
+
+}
+
+
+async function editItem(id){
+
+const item = menu.find(i=>String(i.id)===id);
+
+if(!item) return;
+
+const name = prompt("New item name:",item.name);
+
+if(name===null) return;
+
+const price = Number(prompt("New price:",String(item.price)));
+
+if(!name.trim() || !Number.isFinite(price) || price<=0){
+alert("Invalid details.");
+return;
+}
+
+try{
+
+await requireAdmin();
+
+await saveMenuItem({...item,name:name.trim(),price});
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+}
+
+
+async function deleteItem(id){
+
+if(!confirm("Delete this menu item?")) return;
+
+try{
+
+await requireAdmin();
+
+await updateDoc(doc(db,"menu",id),{
+available:false
+});
+
+menu = menu.map(i=>
+String(i.id)===id ? {...i,available:false} : i
+);
+
+renderMenu();
+renderAdminMenu();
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+}
+
+
+async function saveCafe(){
+
+try{
+
+await requireAdmin();
+
+settings.cafeName = val("cafeNameInput") || "My Coffee Shop";
+
+await setDoc(doc(db,"settings","main"),settings,{
+merge:true
+});
+
+updateCafeName();
+
+alert("Cafe name saved online.");
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+}
+
+
+async function saveRewards(){
+
+const visits = Number(val("visitsRequired"));
+const expiry = Number(val("rewardExpiry"));
+const value = val("rewardValue");
+
+if(!Number.isInteger(visits) || visits<1 ||
+!Number.isInteger(expiry) || expiry<1 || !value){
+
+alert("Enter valid reward settings.");
+return;
+
+}
+
+try{
+
+await requireAdmin();
+
+settings = {
+...settings,
+enabled:val("rewardEnabled"),
+visits,
+type:val("rewardType"),
+value,
+expiry
+};
+
+await setDoc(doc(db,"settings","main"),settings,{
+merge:true
+});
+
+renderRewardDescription();
+
+alert("Rewards settings saved online.");
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+}
+
+
+async function updateOrderStatus(id,status){
+
+try{
+
+await requireAdmin();
+
+await updateDoc(doc(db,"orders",id),{
+
+status,
+updatedAt:serverTimestamp()
+
+});
+
+}catch(e){
+
+alert("Status update failed: " + e.message);
+
+}
+
+}
+
+
+/* REWARDS: Count completed orders for the entered phone number */
+
+async function checkRewards(){
+
+const phone = val("rewardPhone");
+const box = $("rewardResult");
+
+if(!/^[0-9]{10}$/.test(phone)){
+box.textContent = "Enter a valid 10-digit number.";
+return;
+}
+
+if(settings.enabled==="no"){
+box.textContent = "Loyalty rewards are currently disabled.";
+return;
+}
+
+box.textContent = "Checking your completed visits...";
+
+try{
+
+const q = query(
+collection(db,"orders"),
+where("phone","==",phone)
+);
+
+const snap = await getDocs(q);
+
+const completed = snap.docs
+.map(d=>d.data())
+.filter(o=>
+String(o.status||"").toLowerCase()==="completed"
+);
+
+const count = completed.length;
+
+const target = Math.max(1,Number(settings.visits)||5);
+
+const remaining = Math.max(0,target-count);
+
+let rewardText = "";
+
+if(settings.type==="discount"){
+rewardText = esc(settings.value)+"% discount";
+}else if(settings.type==="gift"){
+rewardText = esc(settings.value);
+}else{
+rewardText = "Coupon: "+esc(settings.value);
+}
+
+box.innerHTML = `
+<div class="card">
+<h3>Your Reward Summary 🎁</h3>
+
+<p><b>Mobile:</b> ${esc(phone)}</p>
+
+<p><b>Completed Visits:</b> ${count}</p>
+
+<p><b>Reward Target:</b> ${target} visits</p>
+
+<p><b>Reward:</b> ${rewardText}</p>
+
+${
+count>=target
+? '<p class="status">🎉 Reward target reached! Please show this screen at the counter.</p>'
+: `<p>${remaining} more completed ${
+remaining===1?"visit":"visits"
+} to unlock your reward.</p>`
+}
+
+</div>
+`;
+
+}catch(e){
+
+console.error(e);
+box.textContent = "Could not check rewards: " + e.message;
+
+}
+
+}
+
+
+/* QR CODE GENERATOR */
+
+function generateCafeQR(){
+
+const qrBox = $("qrCode");
+const message = $("qrMessage");
+const downloadButton = $("downloadQRButton");
+
+qrBox.innerHTML = "";
+downloadButton.hidden = true;
+
+if(typeof QRCode==="undefined"){
+
+message.textContent = "QR library load nahi hui. Internet connection check karke dobara try karo.";
+return;
+
+}
+
+/* Remove temporary query parameters from the QR destination */
+
+const qrURL = new URL(window.location.href);
+
+qrURL.search = "";
+qrURL.hash = "";
+
+const finalURL = qrURL.toString();
+
+try{
+
+new QRCode(qrBox,{
+text:finalURL,
+width:220,
+height:220,
+colorDark:"#321d13",
+colorLight:"#ffffff",
+correctLevel:QRCode.CorrectLevel.H
+});
+
+message.textContent = "QR ready. Scan karke ordering website open kar sakte hain.";
+
+downloadButton.hidden = false;
+
+}catch(e){
+
+console.error(e);
+message.textContent = "QR generate nahi hua: "+e.message;
+
+}
+
+}
+
+
+function downloadCafeQR(){
+
+const qrBox = $("qrCode");
+
+const canvas = qrBox.querySelector("canvas");
+const img = qrBox.querySelector("img");
+
+let imageURL = "";
+
+if(canvas){
+imageURL = canvas.toDataURL("image/png");
+}else if(img){
+imageURL = img.src;
+}
+
+if(!imageURL){
+alert("Please generate QR code first.");
+return;
+}
+
+const link = document.createElement("a");
+
+link.href = imageURL;
+link.download = "My-Coffee-Shop-QR.png";
+
+document.body.appendChild(link);
+link.click();
+link.remove();
+
+}
+
+
+/* ADMIN LOGIN */
+
+async function adminLogin(){
+
+const email = val("adminEmail");
+const password = val("adminPassword");
+
+if(email.toLowerCase()!==OWNER_EMAIL){
+alert("This email is not the configured owner account.");
+return;
+}
+
+try{
+
+const credential = await signInWithEmailAndPassword(auth,email,password);
+
+if(credential.user.email!==OWNER_EMAIL){
+await signOut(auth);
+throw new Error("Not the owner account.");
+}
+
+adminLoggedIn = true;
+$("adminPassword").value = "";
+
+setStatus("Connected · Admin signed in");
+
+await renderAdmin();
+
+}catch(e){
+alert("Login failed: " + e.message);
+}
+
+}
+
+
+/* ADMIN LOGOUT */
+
+async function adminLogout(){
+
+adminLoggedIn = false;
+
+if(stopOrdersListener) stopOrdersListener();
+
+stopOrdersListener = null;
+
+await signOut(auth);
+
+currentUser = null;
+
+await signInAnonymously(auth);
+
+currentUser = auth.currentUser;
+
+$("loginBox").hidden = false;
+$("adminArea").hidden = true;
+
+setStatus("Connected · Customer session");
+
+}
+
+
+/* EVENT LISTENERS */
+
+function attachEvents(){
+
+$("mainNav").addEventListener("click",e=>{
+
+const b = e.target.closest("[data-page]");
+
+if(b) showPage(b.dataset.page);
+
+});
+
+document.querySelectorAll('[data-page]:not(#mainNav [data-page])')
+.forEach(b=>{
+b.addEventListener("click",()=>showPage(b.dataset.page));
+});
+
+$("menuList").addEventListener("click",e=>{
+
+const b = e.target.closest('[data-action="add"]');
+
+if(!b) return;
+
+const item = menu.find(i=>String(i.id)===b.dataset.id);
+
+if(item){
+cart.push({...item});
+renderCart();
+alert("Added to cart.");
+}
+
+});
+
+$("cartList").addEventListener("click",e=>{
+
+const b = e.target.closest('[data-action="remove"]');
+
+if(!b) return;
+
+cart.splice(Number(b.dataset.index),1);
+renderCart();
+
+});
+
+$("placeOrderButton").addEventListener("click",placeOrder);
+$("trackButton").addEventListener("click",trackOrders);
+
+$("loginButton").addEventListener("click",adminLogin);
+$("logoutButton").addEventListener("click",adminLogout);
+
+$("saveCafeButton").addEventListener("click",saveCafe);
+$("addItemButton").addEventListener("click",addItem);
+$("saveRewardsButton").addEventListener("click",saveRewards);
+
+$("adminMenu").addEventListener("click",e=>{
+
+const b = e.target.closest("[data-action]");
+
+if(!b) return;
+
+if(b.dataset.action==="edit") editItem(b.dataset.id);
+if(b.dataset.action==="delete") deleteItem(b.dataset.id);
+
+});
+
+$("ordersList").addEventListener("change",e=>{
+
+const s = e.target.closest('[data-action="status"]');
+
+if(s) updateOrderStatus(s.dataset.id,s.value);
+
+});
+
+$("checkRewardsButton").addEventListener("click",checkRewards);
+
+$("generateQRButton").addEventListener("click",generateCafeQR);
+$("downloadQRButton").addEventListener("click",downloadCafeQR);
+
+}
+
+
+/* START APPLICATION */
+
+async function start(){
+
+attachEvents();
+
+setStatus("Step 1: Checking Firebase Authentication...");
+
+try{
+
+await Promise.race([
+signInAnonymously(auth),
+new Promise((_,reject)=>
+setTimeout(()=>reject(new Error("Authentication timeout after 15 seconds")),15000)
+)
+]);
+
+currentUser = auth.currentUser;
+
+setStatus("Step 2: Authentication successful. Loading database...");
+
+await Promise.race([
+loadPublicData(),
+new Promise((_,reject)=>
+setTimeout(()=>reject(new Error("Firestore timeout after 15 seconds")),15000)
+)
+]);
+
+setStatus("Connected to Firebase · Customer session");
+
+onAuthStateChanged(auth,user=>{
+
+currentUser = user;
+
+if(user && user.email===OWNER_EMAIL && !user.isAnonymous){
+
+adminLoggedIn = true;
+
+$("loginBox").hidden = true;
+$("adminArea").hidden = false;
+
+renderAdmin();
+
+}
+
+});
+
+}catch(e){
+
+console.error("FIREBASE DEBUG ERROR:",e);
+
+setStatus("ERROR: "+e.message);
+
+alert("Firebase Error: "+e.message);
+
+}
+
+renderCart();
+
+}
+
+start();
